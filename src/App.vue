@@ -5,39 +5,50 @@
       color="primary"
       dark
     >
-      <v-app-bar-nav-icon @click.stop="toggleSideMenu"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon v-show="$store.state.login_user" @click.stop="toggleSideMenu"></v-app-bar-nav-icon>
       <span>マイアドレス帳</span>
-
       <v-spacer></v-spacer>
-
+      <v-toolbar-items v-if="$store.state.login_user">
+        <v-btn text @click="logout">ログアウト</v-btn>
+      </v-toolbar-items>
     </v-app-bar>
       <SideNav></SideNav>
     <v-content>
       <v-container fluid fill-height align-start>
         <router-view/>
-      </v-container>
-      
+      </v-container>    
     </v-content>
   </v-app>
 </template>
 
 <script>
+import firebase from 'firebase'
 import SideNav from './components/SideNav'
 import { mapActions } from 'vuex'
 
 export default {
   name: 'App',
-
   components: {
     SideNav
   },
-
+  created(){
+    firebase.auth().onAuthStateChanged(user => {
+      if (user){
+        this.setLoginUser(user)
+        this.fetchAddresses()
+        // 直接ユーザーがAddressページに行くと困るので，現在のページがHomeであることを確認してから遷移
+        if(this.$router.currentRoute.name === 'Home') this.$router.push({ name: 'Addresses' })
+      }else{
+        this.deleteLoginUser()
+        this.$router.push({ name: 'Home' })
+      }
+    })
+  },
   data: () => ({
     //
   }),
-
   methods:{
-    ...mapActions(['toggleSideMenu'])
+    ...mapActions(['toggleSideMenu', 'setLoginUser', 'logout', 'deleteLoginUser', 'fetchAddresses'])
   }
 };
 </script>
